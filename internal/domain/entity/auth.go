@@ -2,6 +2,7 @@ package entity
 
 import (
 	"github.com/rfanazhari/factory-login/internal/domain/valueobject"
+	"time"
 )
 
 // Authentication represents an authenticated session
