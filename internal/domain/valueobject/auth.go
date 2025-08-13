@@ -24,6 +24,7 @@ type LoginType int
 const (
 	LoginTypeMSISDN LoginType = iota
 	LoginTypeEmail
+	LoginTypeGoogle
 )
 
 func (lt LoginType) String() string {
@@ -32,6 +33,8 @@ func (lt LoginType) String() string {
 		return "msisdn"
 	case LoginTypeEmail:
 		return "email"
+	case LoginTypeGoogle:
+		return "google"
 	default:
 		return "unknown"
 	}

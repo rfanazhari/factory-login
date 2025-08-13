@@ -10,6 +10,6 @@ import (
 // LoginStrategy defines the interface for login strategies
 type LoginStrategy interface {
 	ValidateInput(req *dto.LoginRequest) error
-	FindUser(ctx context.Context, identifier string) (*entity.User, error)
-	GetRateLimitKey(identifier string) string
+	Authenticate(ctx context.Context, req *dto.LoginRequest) (*entity.User, error)
+	GetRateLimitKey(req *dto.LoginRequest) string
 }

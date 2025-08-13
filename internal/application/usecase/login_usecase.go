@@ -58,32 +58,26 @@ func (uc *LoginUseCase) Execute(ctx context.Context, req *dto.LoginRequest) (*dt
 	}
 
 	// 4. Check rate limit
-	rateLimitKey := loginStrategy.GetRateLimitKey(req.Identifier)
+	rateLimitKey := loginStrategy.GetRateLimitKey(req)
 	if err := uc.rateLimitService.CheckLimit(ctx, rateLimitKey); err != nil {
 		return &dto.LoginResponse{Success: false, Message: "too many attempts, please try again later"}, nil
 	}
 
-	// 5. Find user
-	foundUser, err := loginStrategy.FindUser(ctx, req.Identifier)
+	// 5. Authenticate using strategy
+	user, err := loginStrategy.Authenticate(ctx, req)
 	if err != nil {
 		uc.rateLimitService.IncrementAttempt(ctx, rateLimitKey)
 		return &dto.LoginResponse{Success: false, Message: "invalid credentials"}, nil
 	}
 
 	// 6. Check if user is active
-	if !foundUser.IsActive() {
+	if !user.IsActive() {
 		uc.rateLimitService.IncrementAttempt(ctx, rateLimitKey)
 		return &dto.LoginResponse{Success: false, Message: "account is inactive"}, nil
 	}
 
-	// 7. Verify password
-	if !foundUser.VerifyPassword(req.Password) {
-		uc.rateLimitService.IncrementAttempt(ctx, rateLimitKey)
-		return &dto.LoginResponse{Success: false, Message: "invalid credentials"}, nil
-	}
-
-	// 8. Generate authentication token
-	authentication, err := uc.tokenService.GenerateAccessToken(foundUser.ID())
+	// 7. Generate authentication token
+	authentication, err := uc.tokenService.GenerateAccessToken(user.ID())
 	if err != nil {
 		return &dto.LoginResponse{Success: false, Message: "failed to generate token"}, nil
 	}

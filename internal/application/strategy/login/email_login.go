@@ -24,14 +24,21 @@ func (s *EmailLoginStrategy) ValidateInput(req *dto.LoginRequest) error {
 	return err
 }
 
-func (s *EmailLoginStrategy) FindUser(ctx context.Context, identifier string) (*entity.User, error) {
-	email, err := valueobject.NewEmail(identifier)
+func (s *EmailLoginStrategy) Authenticate(ctx context.Context, req *dto.LoginRequest) (*entity.User, error) {
+	email, err := valueobject.NewEmail(req.Identifier)
 	if err != nil {
 		return nil, err
 	}
-	return s.userRepo.FindByEmail(ctx, *email)
+	user, err := s.userRepo.FindByEmail(ctx, *email)
+	if err != nil {
+		return nil, err
+	}
+	if !user.VerifyPassword(req.Password) {
+		return nil, fmt.Errorf("invalid credentials")
+	}
+	return user, nil
 }
 
-func (s *EmailLoginStrategy) GetRateLimitKey(identifier string) string {
-	return fmt.Sprintf("login:email:%s", identifier)
+func (s *EmailLoginStrategy) GetRateLimitKey(req *dto.LoginRequest) string {
+	return fmt.Sprintf("login:email:%s", req.Identifier)
 }

@@ -28,12 +28,13 @@ func NewContainer(secretCaptcha string, redisUrl string, maxRateLimit int, maxRa
 	captchaService := google.NewGoogleCaptchaService(secretCaptcha)
 	rateLimitService := externalRedis.NewRedisRateLimitService(rdb, maxRateLimit, maxRateLimitDuration)
 	tokenService := jwt.NewJWTTokenService()
+	googleOAuthService := google.NewGoogleOAuthService()
 
 	// Repository
 	userRepo := memory.NewInMemoryUserRepository()
 
 	// Factory
-	strategyFactory := strategylogin.NewLoginStrategyFactory(userRepo)
+	strategyFactory := strategylogin.NewLoginStrategyFactory(userRepo, googleOAuthService)
 
 	// Use Case
 	loginUseCase := usecase.NewLoginUseCase(strategyFactory, captchaService, rateLimitService, tokenService, skipCaptcha)

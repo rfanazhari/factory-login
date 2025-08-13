@@ -24,14 +24,21 @@ func (s *MSISDNLoginStrategy) ValidateInput(req *dto.LoginRequest) error {
 	return err
 }
 
-func (s *MSISDNLoginStrategy) FindUser(ctx context.Context, identifier string) (*entity.User, error) {
-	msisdn, err := valueobject.NewMSISDN(identifier)
+func (s *MSISDNLoginStrategy) Authenticate(ctx context.Context, req *dto.LoginRequest) (*entity.User, error) {
+	msisdn, err := valueobject.NewMSISDN(req.Identifier)
 	if err != nil {
 		return nil, err
 	}
-	return s.userRepo.FindByMSISDN(ctx, *msisdn)
+	user, err := s.userRepo.FindByMSISDN(ctx, *msisdn)
+	if err != nil {
+		return nil, err
+	}
+	if !user.VerifyPassword(req.Password) {
+		return nil, fmt.Errorf("invalid credentials")
+	}
+	return user, nil
 }
 
-func (s *MSISDNLoginStrategy) GetRateLimitKey(identifier string) string {
-	return fmt.Sprintf("login:msisdn:%s", identifier)
+func (s *MSISDNLoginStrategy) GetRateLimitKey(req *dto.LoginRequest) string {
+	return fmt.Sprintf("login:msisdn:%s", req.Identifier)
 }
